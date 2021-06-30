@@ -1,0 +1,105 @@
+#include <iostream>
+#include <clocale>
+#include <windows.h>
+
+using namespace std;
+
+struct item //Описание элемента графа
+{
+	int a, z; //Начальный и конечный узлы
+	int route; //Путь
+};
+
+const int q = 11; //Кол-во путей по графу
+
+struct item field[q] =
+{
+	{0,1,2}, {0,2,4}, {0,3,10}, {1,3,11}, {1,4,5}, {2,3,3}, {2,5,1}, {3,4,8}, {3,5,7}, {4,6,6}, {5,6,9}
+}; //Все возможные варианты путь на графе, нумерация узлов начинается с 0
+
+const int ap = 7; //Количество вершин
+
+int path[ap]; //Номера узлов
+bool inc[ap]; //True, если i-ая вершина включена в путь
+int route[ap]; //Искомый путь
+int routing; //Длина искомого пути
+int start, finish; //Начальная и конечная вершины
+bool found; //Отмечает найденный кратчайший маршрут
+int r_len; //Текущий "вес" маршрута
+int len; //"Вес" всего маршрута
+
+int find(int a, int z) //Вес пути из точки a в z или 0, если путь отсутсвует
+{
+	for (int i = 0; i < q; i++)
+	{
+		if ((field[i].a == a && field[i].z == z) || (field[i].a == z && field[i].z == a))
+		{
+			return field[i].route;
+		}
+	}
+	return 0;
+}
+
+void step(int a, int f, int p) //Рекурсивный поиск шага пути
+{
+	int n; // Номер вершины графа, куда делается шаг
+	if (a == f) //Путь найден
+	{
+		found = true; //Переменная, отвечающая за нахождение
+		len = r_len; //Запоминание общего пути
+		routing = p; //Запоминание длины пути (Количества узлов)
+		for (int i = 0; i < routing; i++)
+		{
+			route[i] = path[i]; //Запоминание пути
+		}
+	}
+	else //Выбор точки
+	{
+		for (n = 0; n < ap; n++)
+		{
+			int d = find(a, n); //Есть ли путь из a в n
+			if (d && !inc[n] && (len == 0 || r_len + d < len)) //Нужная точка не включена?
+			{
+				path[p] = n; //Включить точку в путь
+				inc[n] = true; //Пометить как включенную
+				r_len += d; //Учесть в общем весе пути
+				step(n, f, p + 1); //Вызвать себя для поиска следующей точки
+				path[p] = 0;
+				inc[n] = false;
+				r_len -= d;
+			}
+		}
+	}
+}
+
+int main()
+{
+	setlocale(LC_ALL, "rus");
+	//Инициализация данных:
+	for (int i = 0; i < ap; i++)
+	{
+		path[i] = route[i] = 0; inc[i] = false;
+	}
+
+	len = r_len = routing = 0;
+	start = 0; //Начало пути - нумерация первого элемента - с 0
+	finish = 6; //Конец пути
+	path[0] = start; //Первую точку внесли в маршрут
+	inc[start] = true; //Пометили как включённую
+	found = false; //Путь пока не найден
+	step(start, finish, 1); //Ищем вторую точку
+
+	if (found)
+	{
+		cout << "Путь: ";
+		for (int i = 0; i < routing; i++) cout << " " << route[i] + 1;
+		cout << ", Длина пути: " << len;
+	}
+	else
+	{
+		cout << "Путь не найден. Повторите попытку.";
+	}
+	cout << endl;
+	system("pause");
+	return 0;
+}
